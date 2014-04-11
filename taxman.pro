@@ -28,3 +28,7 @@ HEADERS  += mainwindow.h
 
 FORMS    += mainwindow.ui
 
+unix {
+	CONFIG += link_pkgconfig
+	PKGCONFIG = opencv
+}
