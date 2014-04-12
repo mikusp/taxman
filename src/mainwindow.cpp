@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent) :
     scene{},
     timer{},
     pixmap{},
-    videoCapture{1}
+    videoCapture{0}
 {
     ui->setupUi(this);
     timer.setInterval(16);
