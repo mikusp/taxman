@@ -33,7 +33,7 @@
        <enum>QLayout::SetMaximumSize</enum>
       </property>
       <item>
-       <widget class="QGraphicsView" name="graphicsView"/>
+       <widget class="QClickableGraphicsView" name="graphicsView"/>
       </item>
       <item>
        <widget class="QWidget" name="vertLayoutWidget" native="true">
@@ -235,6 +235,13 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>QClickableGraphicsView</class>
+   <extends>QGraphicsView</extends>
+   <header>qclickablegraphicsview.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

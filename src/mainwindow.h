@@ -13,6 +13,17 @@ namespace Ui {
 class MainWindow;
 }
 
+enum class AnswerDecodingState {
+    IDLE,
+    WAITING_FOR_1ST_CLICK,
+    WAITING_FOR_2ND_CLICK
+};
+
+struct Point {
+    int x;
+    int y;
+};
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -35,7 +46,13 @@ private slots:
 
     void on_captureReferenceFrameButton_released();
 
+    void on_startSurveyDecodingButton_released();
+
+    void on_graphicsView_clicked(int x, int y);
+
 private:
+    void calculateAnswers();
+
     Ui::MainWindow *ui;
     QGraphicsScene scene;
     QTimer timer;
@@ -46,6 +63,11 @@ private:
 
     int numberOfQuestions;
     int numberOfAnswers;
+
+    AnswerDecodingState answerDecodingState;
+
+    Point leftUpper;
+    Point rightLower;
 };
 
 #endif // MAINWINDOW_H
