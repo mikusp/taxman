@@ -11,7 +11,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = taxman
 TEMPLATE = app
 
-QMAKE_CXX = g++
 QMAKE_CXXFLAGS += -std=c++11 -Werror -fstack-protector -Wformat-security -fvisibility=hidden -Wpointer-arith -Winit-self
 
 QMAKE_CXXFLAGS_DEBUG += -g3 -ggdb3
@@ -30,7 +29,7 @@ HEADERS  += mainwindow.h \
 FORMS    += mainwindow.ui
 
 unix {
-    QMAKE_CXX = clang++
+	QMAKE_CXX = g++
     CONFIG += link_pkgconfig
     PKGCONFIG = opencv
 }
