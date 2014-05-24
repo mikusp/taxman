@@ -25,12 +25,23 @@ private slots:
     void on_actionExit_triggered();
     void update_camera_view();
 
+    void on_questionsInSurvey_sliderReleased();
+
+    void on_questionsInSurvey_valueChanged(int value);
+
+    void on_answersInSurvey_valueChanged(int value);
+
+    void on_answersInSurvey_sliderReleased();
+
 private:
     Ui::MainWindow *ui;
     QGraphicsScene scene;
     QTimer timer;
     QGraphicsPixmapItem pixmap;
     cv::VideoCapture videoCapture;
+
+    int numberOfQuestions;
+    int numberOfAnswers;
 };
 
 #endif // MAINWINDOW_H

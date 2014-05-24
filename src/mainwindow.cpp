@@ -16,6 +16,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(&timer, &QTimer::timeout, this, &MainWindow::update_camera_view);
     timer.start();
 
+    // update sliders labels
+    ui->questionsInSurvey->valueChanged(ui->questionsInSurvey->value());
+    ui->answersInSurvey->valueChanged(ui->answersInSurvey->value());
+
     ui->graphicsView->setScene(&scene);
 }
 
@@ -41,4 +45,26 @@ void MainWindow::update_camera_view()
     ui->graphicsView->scene()->clear();
     ui->graphicsView->scene()->addItem(new QGraphicsPixmapItem{QPixmap::fromImage(qimage)});
     ui->graphicsView->update();
+}
+
+void MainWindow::on_questionsInSurvey_sliderReleased()
+{
+    this->numberOfQuestions = ui->questionsInSurvey->value();
+    qDebug() << "questions: " << this->numberOfQuestions;
+}
+
+void MainWindow::on_questionsInSurvey_valueChanged(int value)
+{
+    ui->questionsNumber->setText(QString::number(value));
+}
+
+void MainWindow::on_answersInSurvey_valueChanged(int value)
+{
+    ui->answersNumber->setText(QString::number(value));
+}
+
+void MainWindow::on_answersInSurvey_sliderReleased()
+{
+    this->numberOfAnswers = ui->answersInSurvey->value();
+    qDebug() << "answers: " << this->numberOfAnswers;
 }

@@ -84,7 +84,7 @@
           </spacer>
          </item>
          <item>
-          <widget class="QLabel" name="surveyColumnsLabel">
+          <widget class="QLabel" name="surveyQuestionsLabel">
            <property name="text">
             <string>Liczba pytań w ankiecie</string>
            </property>
@@ -94,7 +94,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QSlider" name="columnsInSurvey">
+          <widget class="QSlider" name="questionsInSurvey">
            <property name="maximum">
             <number>30</number>
            </property>
@@ -136,7 +136,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QSlider" name="answerInSurvey">
+          <widget class="QSlider" name="answersInSurvey">
            <property name="maximum">
             <number>10</number>
            </property>
