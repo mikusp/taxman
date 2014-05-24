@@ -130,13 +130,15 @@ void MainWindow::calculateAnswers() {
     auto offsetY = leftUpper.y;
 
     std::vector<std::vector<std::tuple<double, double>>> centralPoints;
-    for (auto j = 0; j < numberOfQuestions; ++j) {
+    for (auto j = 0; j < numberOfAnswers; ++j) {
         std::vector<std::tuple<double, double>> currentColumn;
 
-        for (auto i = 0; i < numberOfAnswers; ++i) {
+        for (auto i = 0; i < numberOfQuestions; ++i) {
             auto current = std::make_tuple(
                         offsetX + j * columnWidth  + (columnWidth  / 2.0),
                         offsetY + i * columnHeight + (columnHeight / 2.0));
+//                        offsetX + j * columnWidth  + (columnWidth  / 2.0));
+            qDebug() << "point " << j << ", " << i << ": " << std::get<0>(current) << ", " << std::get<1>(current);
             currentColumn.push_back(current);
         }
 
@@ -160,16 +162,10 @@ void MainWindow::calculateAnswers() {
 
     cv::Mat absImg, res(bg);
     cv::absdiff(cross, bg, absImg);
-    NiblackSauvolaWolfJolion(absImg, res, WOLFJOLION, 40, 40, 0.5, 128);
+//    NiblackSauvolaWolfJolion(absImg, res, WOLFJOLION, 40, 40, 0.5, 128);
     qDebug() << "binarized absdiff";
 
-    qDebug() << "non-zero points in res" << cv::countNonZero(res);
-
-    cv::threshold(res, res, 254, 1, cv::THRESH_BINARY);
-
-//    absImg = absImg > 254;
-
-    qDebug() << "non-zero points in bin res" << cv::countNonZero(res);
+    qDebug() << "non-zero points in abs" << cv::countNonZero(absImg);
 
     // TODO clean image
     // find how to compute bwmorph(in, 'clean') in opencv
@@ -177,12 +173,13 @@ void MainWindow::calculateAnswers() {
     auto sliceHeight = (unsigned int)(columnHeight * 0.75);
     auto sliceWidth  = (unsigned int)(columnWidth * 0.75);
 
-    auto answerTolerance = 3;
-    auto index = 1;
+    auto answerTolerance = 30;
+    std::vector<std::tuple<int, int>> results;
 
+    for (auto i = 0; i < numberOfQuestions; ++i) {
     for (auto j = 0; j < numberOfAnswers; ++j) {
-        for (auto i = 0; i < numberOfQuestions; ++i) {
-            auto currentCell = centralPoints.at(i).at(j);
+//        for (auto i = 0; i < numberOfQuestions; ++i) {
+            auto currentCell = centralPoints.at(j).at(i);
 
             auto yLow = (unsigned int)(std::get<1>(currentCell) - (double)(sliceHeight / 2.0) + 1);
             auto yHigh = (unsigned int)(std::get<1>(currentCell) + (double)(sliceHeight / 2.0) - 1);
@@ -195,20 +192,28 @@ void MainWindow::calculateAnswers() {
             auto height = yHigh - yLow;
             auto width = xHigh - xLow;
 
-            auto rect = cv::Rect(yLow, xLow, width, height);
+            auto rect = cv::Rect(xLow, yLow, width, height);
             auto window = absImg(rect);
             auto count = cv::countNonZero(window);
 
             qDebug() << "count for " << i+1 << ", " << j+1 << " is " << count;
 
             if (count > answerTolerance) {
-                qDebug() << "question " << i << " has answer " << j;
-                index++;
+                results.emplace_back(std::make_tuple(i+1, j+1));
             }
         }
     }
 
-    ui->decodedAnswersTextArea->setPlainText("bogus answers");
+    std::string text;
+    for (auto it = begin(results); it != end(results); ++it) {
+        text.append("Question ");
+        text.append(std::to_string(std::get<0>(*it)));
+        text.append(" has answer ");
+        text.append(std::to_string(std::get<1>(*it)));
+        text.append("\n");
+    }
+
+    ui->decodedAnswersTextArea->setPlainText(QString::fromStdString(text));
     answerDecodingState = AnswerDecodingState::IDLE;
 //    this->timer.start();
 }
