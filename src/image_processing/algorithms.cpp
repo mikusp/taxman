@@ -36,3 +36,29 @@ void Algorithms::canny(cv::InputArray in, cv::OutputArray out, int lowThreshold,
 {
     cv::Canny(in, out, lowThreshold, highThreshold);
 }
+
+void Algorithms::skel(cv::InputArray& in, cv::OutputArray& out) {
+    Q_ASSERT(in.depth() == CV_8U);
+
+    auto tmp = in.getMat();
+    cv::threshold(tmp, tmp, 127, 255, cv::THRESH_BINARY);
+    cv::Mat skel(tmp.size(), CV_8UC1, cv::Scalar(0));
+    cv::Mat temp;
+    cv::Mat eroded;
+
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
+
+    bool done;
+    do
+    {
+      cv::erode(tmp, eroded, element);
+      cv::dilate(eroded, temp, element); // temp = open(img)
+      cv::subtract(tmp, temp, temp);
+      cv::bitwise_or(skel, temp, skel);
+      eroded.copyTo(tmp);
+
+      done = (cv::countNonZero(tmp) == 0);
+    } while (!done);
+
+    tmp.copyTo(out);
+}

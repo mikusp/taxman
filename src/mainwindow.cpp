@@ -26,6 +26,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->questionsInSurvey->valueChanged(ui->questionsInSurvey->value());
     ui->answersInSurvey->valueChanged(ui->answersInSurvey->value());
 
+    this->numberOfAnswers = ui->answersInSurvey->value();
+    this->numberOfQuestions = ui->questionsInSurvey->value();
+
+    ui->graphicsView->setAlignment(Qt::AlignLeft | Qt::AlignTop);
     ui->graphicsView->setScene(&scene);
 }
 
@@ -42,8 +46,8 @@ void MainWindow::on_actionExit_triggered()
 void MainWindow::update_camera_view()
 {
     cv::Mat frame, i;
-    videoCapture >> frame;
-//    frame = cv::imread("../taxman/assets/krzyzyki.png", CV_LOAD_IMAGE_COLOR);
+//    videoCapture >> frame;
+    frame = cv::imread("../taxman/assets/krzyzyki.png", CV_LOAD_IMAGE_COLOR);
     cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
 
     NiblackSauvolaWolfJolion(frame, frame, WOLFJOLION, 40, 40, 0.5, 128);
@@ -109,6 +113,8 @@ void MainWindow::on_graphicsView_clicked(int x, int y) {
         QApplication::restoreOverrideCursor();
         calculateAnswers();
     }
+
+    qDebug() << "click at" << x << " " << y;
 }
 
 void MainWindow::calculateAnswers() {
@@ -138,23 +144,71 @@ void MainWindow::calculateAnswers() {
     }
 
     cv::Mat cross, bg;
-    videoCapture >> crossImg;
+//    videoCapture >> cross;
+    cross = cv::imread("../taxman/assets/krzyzyki.png", CV_LOAD_IMAGE_COLOR);
+    referenceFrame = cv::imread("../taxman/assets/krzyzyki_tlo.png", CV_LOAD_IMAGE_COLOR);
+    qDebug() << cross.cols << " " << referenceFrame.rows;
+    qDebug() << "read files";
+
     cv::cvtColor(cross, cross, cv::COLOR_BGR2GRAY);
     cv::cvtColor(referenceFrame, bg, cv::COLOR_BGR2GRAY);
+    qDebug() << "converted to gray";
 
     NiblackSauvolaWolfJolion(cross, cross, WOLFJOLION, 40, 40, 0.5, 128);
     NiblackSauvolaWolfJolion(bg, bg, WOLFJOLION, 40, 40, 0.5, 128);
+    qDebug() << "binarized images";
 
-    cv::Mat absImg;
+    cv::Mat absImg, res(bg);
     cv::absdiff(cross, bg, absImg);
-    NiblackSauvolaWolfJolion(absImg, absImg, WOLFJOLION, 40, 40, 0.5, 128);
+    NiblackSauvolaWolfJolion(absImg, res, WOLFJOLION, 40, 40, 0.5, 128);
+    qDebug() << "binarized absdiff";
+
+    qDebug() << "non-zero points in res" << cv::countNonZero(res);
+
+    cv::threshold(res, res, 254, 1, cv::THRESH_BINARY);
+
+//    absImg = absImg > 254;
+
+    qDebug() << "non-zero points in bin res" << cv::countNonZero(res);
 
     // TODO clean image
     // find how to compute bwmorph(in, 'clean') in opencv
 
+    auto sliceHeight = (unsigned int)(columnHeight * 0.75);
+    auto sliceWidth  = (unsigned int)(columnWidth * 0.75);
 
+    auto answerTolerance = 3;
+    auto index = 1;
+
+    for (auto j = 0; j < numberOfAnswers; ++j) {
+        for (auto i = 0; i < numberOfQuestions; ++i) {
+            auto currentCell = centralPoints.at(i).at(j);
+
+            auto yLow = (unsigned int)(std::get<1>(currentCell) - (double)(sliceHeight / 2.0) + 1);
+            auto yHigh = (unsigned int)(std::get<1>(currentCell) + (double)(sliceHeight / 2.0) - 1);
+
+            auto xLow = (unsigned int)(std::get<0>(currentCell) - (unsigned int)(sliceWidth / 2.0) + 1);
+            auto xHigh = (unsigned int)(std::get<0>(currentCell) + (unsigned int)(sliceWidth / 2.0) - 1);
+            qDebug() << xLow << " " << xHigh;
+            qDebug() << yLow << " " << yHigh;
+
+            auto height = yHigh - yLow;
+            auto width = xHigh - xLow;
+
+            auto rect = cv::Rect(yLow, xLow, width, height);
+            auto window = absImg(rect);
+            auto count = cv::countNonZero(window);
+
+            qDebug() << "count for " << i+1 << ", " << j+1 << " is " << count;
+
+            if (count > answerTolerance) {
+                qDebug() << "question " << i << " has answer " << j;
+                index++;
+            }
+        }
+    }
 
     ui->decodedAnswersTextArea->setPlainText("bogus answers");
     answerDecodingState = AnswerDecodingState::IDLE;
-    this->timer.start();
+//    this->timer.start();
 }
