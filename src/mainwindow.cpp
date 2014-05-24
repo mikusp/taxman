@@ -85,10 +85,15 @@ void MainWindow::on_captureReferenceFrameButton_released()
 
 void MainWindow::on_startSurveyDecodingButton_released()
 {
-    this->timer.stop();
-    this->answerDecodingState = AnswerDecodingState::WAITING_FOR_1ST_CLICK;
-    QApplication::setOverrideCursor(Qt::CrossCursor);
-    qDebug() << "decoding started; waiting for 1st click";
+    if (this->answerDecodingState == AnswerDecodingState::IDLE) {
+        this->timer.stop();
+        this->answerDecodingState = AnswerDecodingState::WAITING_FOR_1ST_CLICK;
+        QApplication::setOverrideCursor(Qt::CrossCursor);
+        qDebug() << "decoding started; waiting for 1st click";
+    }
+    else {
+        qWarning() << "decoding already in progress";
+    }
 }
 
 void MainWindow::on_graphicsView_clicked(int x, int y) {
@@ -111,6 +116,43 @@ void MainWindow::calculateAnswers() {
 
     auto areaHeight = rightLower.y - leftUpper.y;
     auto areaWidth  = rightLower.x - leftUpper.x;
+
+    auto columnHeight = areaHeight / numberOfQuestions;
+    auto columnWidth  = areaWidth / numberOfAnswers;
+
+    auto offsetX = leftUpper.x;
+    auto offsetY = leftUpper.y;
+
+    std::vector<std::vector<std::tuple<double, double>>> centralPoints;
+    for (auto j = 0; j < numberOfQuestions; ++j) {
+        std::vector<std::tuple<double, double>> currentColumn;
+
+        for (auto i = 0; i < numberOfAnswers; ++i) {
+            auto current = std::make_tuple(
+                        offsetX + j * columnWidth  + (columnWidth  / 2.0),
+                        offsetY + i * columnHeight + (columnHeight / 2.0));
+            currentColumn.push_back(current);
+        }
+
+        centralPoints.push_back(currentColumn);
+    }
+
+    cv::Mat cross, bg;
+    videoCapture >> crossImg;
+    cv::cvtColor(cross, cross, cv::COLOR_BGR2GRAY);
+    cv::cvtColor(referenceFrame, bg, cv::COLOR_BGR2GRAY);
+
+    NiblackSauvolaWolfJolion(cross, cross, WOLFJOLION, 40, 40, 0.5, 128);
+    NiblackSauvolaWolfJolion(bg, bg, WOLFJOLION, 40, 40, 0.5, 128);
+
+    cv::Mat absImg;
+    cv::absdiff(cross, bg, absImg);
+    NiblackSauvolaWolfJolion(absImg, absImg, WOLFJOLION, 40, 40, 0.5, 128);
+
+    // TODO clean image
+    // find how to compute bwmorph(in, 'clean') in opencv
+
+
 
     ui->decodedAnswersTextArea->setPlainText("bogus answers");
     answerDecodingState = AnswerDecodingState::IDLE;
