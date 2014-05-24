@@ -33,12 +33,16 @@ private slots:
 
     void on_answersInSurvey_sliderReleased();
 
+    void on_captureReferenceFrameButton_released();
+
 private:
     Ui::MainWindow *ui;
     QGraphicsScene scene;
     QTimer timer;
     QGraphicsPixmapItem pixmap;
     cv::VideoCapture videoCapture;
+
+    cv::Mat referenceFrame;
 
     int numberOfQuestions;
     int numberOfAnswers;

@@ -68,3 +68,9 @@ void MainWindow::on_answersInSurvey_sliderReleased()
     this->numberOfAnswers = ui->answersInSurvey->value();
     qDebug() << "answers: " << this->numberOfAnswers;
 }
+
+void MainWindow::on_captureReferenceFrameButton_released()
+{
+    videoCapture >> referenceFrame;
+    qDebug() << "captured reference frame";
+}
