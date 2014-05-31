@@ -13,12 +13,12 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow{parent},
     ui{new Ui::MainWindow},
-    videoCapture{0},
+    videoCapture{1},
     answerDecodingState{AnswerDecodingState::IDLE}
 {
     ui->setupUi(this);
-//    timer.setInterval(100);
-//    connect(&timer, &QTimer::timeout, this, &MainWindow::update_camera_view);
+    timer.setInterval(32);
+    connect(&timer, &QTimer::timeout, this, &MainWindow::update_camera_view);
 //    timer.start();
 
     connect(ui->graphicsView, &QClickableGraphicsView::mousePressed, this, &MainWindow::on_graphicsView_clicked);
@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent) :
 
     this->numberOfAnswers = ui->answersInSurvey->value();
     this->numberOfQuestions = ui->questionsInSurvey->value();
+
+    camera = this->ui->useCameraCheckbox->checkState() == Qt::Checked;
 
     ui->graphicsView->setAlignment(Qt::AlignLeft | Qt::AlignTop);
     ui->graphicsView->setScene(&scene);
@@ -46,18 +48,13 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::update_camera_view()
 {
-//    cv::Mat frame, i;
-////    videoCapture >> frame;
-//    frame = cv::imread("../taxman/assets/krzyzyki.png", CV_LOAD_IMAGE_COLOR);
-//    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+    videoCapture >> frame;
+    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
 
-//    NiblackSauvolaWolfJolion(frame, frame, WOLFJOLION, 40, 40, 0.5, 128);
-
-//    i = frame;
-//    auto qimage = QImage{i.data, i.cols, i.rows, QImage::Format_Indexed8};
-//    ui->graphicsView->scene()->clear();
-//    ui->graphicsView->scene()->addItem(new QGraphicsPixmapItem{QPixmap::fromImage(qimage)});
-//    ui->graphicsView->update();
+    auto qimage = QImage{frame.data, frame.cols, frame.rows, QImage::Format_Indexed8};
+    ui->graphicsView->scene()->clear();
+    ui->graphicsView->scene()->addItem(new QGraphicsPixmapItem{QPixmap::fromImage(qimage)});
+    ui->graphicsView->update();
 }
 
 void MainWindow::on_questionsInSurvey_sliderReleased()
@@ -84,22 +81,31 @@ void MainWindow::on_answersInSurvey_sliderReleased()
 
 void MainWindow::on_captureReferenceFrameButton_released()
 {
-//    videoCapture >> referenceFrame;
-    QFileDialog fileDialog {this};
-    fileDialog.setFileMode(QFileDialog::ExistingFile);
-
-    if (fileDialog.exec()) {
-        auto selected = fileDialog.selectedFiles().first();
-        referenceFrame = cv::imread(selected.toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
-        NiblackSauvolaWolfJolion(referenceFrame, referenceFrame, WOLFJOLION, 40, 40, 0.5, 128);
-        qDebug() << "captured reference frame";
+    if (camera) {
+        videoCapture >> referenceFrame;
+        cv::cvtColor(referenceFrame, referenceFrame, CV_BGR2GRAY);
     }
+    else {
+        QFileDialog fileDialog {this};
+        fileDialog.setFileMode(QFileDialog::ExistingFile);
+
+        if (fileDialog.exec()) {
+            auto selected = fileDialog.selectedFiles().first();
+            referenceFrame = cv::imread(selected.toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+        }
+    }
+
+
+    NiblackSauvolaWolfJolion(referenceFrame, referenceFrame, WOLFJOLION, 40, 40, 0.5, 128);
+    qDebug() << "captured reference frame";
 }
 
 void MainWindow::on_startSurveyDecodingButton_released()
 {
     if (this->answerDecodingState == AnswerDecodingState::IDLE) {
-//        this->timer.stop();
+        if (camera) {
+            this->timer.stop();
+        }
         this->answerDecodingState = AnswerDecodingState::WAITING_FOR_1ST_CLICK;
         QApplication::setOverrideCursor(Qt::CrossCursor);
         qDebug() << "decoding started; waiting for 1st click";
@@ -152,6 +158,10 @@ void MainWindow::calculateAnswers() {
         }
 
         centralPoints.push_back(currentColumn);
+    }
+
+    if (camera) {
+         NiblackSauvolaWolfJolion(frame, frame, WOLFJOLION, 40, 40, 0.5, 128);
     }
 
     cv::Mat absImg;
@@ -207,7 +217,10 @@ void MainWindow::calculateAnswers() {
 
     ui->decodedAnswersTextArea->setPlainText(QString::fromStdString(text));
     answerDecodingState = AnswerDecodingState::IDLE;
-//    this->timer.start();
+
+    if (camera) {
+        this->timer.start();
+    }
 }
 
 void MainWindow::on_actionZapisz_triggered()
@@ -247,5 +260,21 @@ void MainWindow::on_openAnsweredSurveyButton_released()
         ui->graphicsView->scene()->clear();
         ui->graphicsView->scene()->addItem(new QGraphicsPixmapItem{QPixmap::fromImage(qimage)});
         ui->graphicsView->update();
+    }
+}
+
+void MainWindow::on_useCameraCheckbox_stateChanged(int state)
+{
+    if (state == Qt::Checked) {
+        // use camera
+        this->camera = true;
+        timer.start();
+        this->ui->openAnsweredSurveyButton->setEnabled(false);
+    }
+    else {
+        // use files
+        this->camera = false;
+        timer.stop();
+        this->ui->openAnsweredSurveyButton->setEnabled(true);
     }
 }

@@ -56,6 +56,8 @@ private slots:
 
     void on_openAnsweredSurveyButton_released();
 
+    void on_useCameraCheckbox_stateChanged(int state);
+
 private:
     void calculateAnswers();
 
@@ -66,6 +68,8 @@ private:
     cv::VideoCapture videoCapture;
 
     cv::Mat referenceFrame, frame;
+
+    bool camera;
 
     int numberOfQuestions;
     int numberOfAnswers;
