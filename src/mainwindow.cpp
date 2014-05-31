@@ -17,9 +17,9 @@ MainWindow::MainWindow(QWidget *parent) :
     answerDecodingState{AnswerDecodingState::IDLE}
 {
     ui->setupUi(this);
-    timer.setInterval(100);
-    connect(&timer, &QTimer::timeout, this, &MainWindow::update_camera_view);
-    timer.start();
+//    timer.setInterval(100);
+//    connect(&timer, &QTimer::timeout, this, &MainWindow::update_camera_view);
+//    timer.start();
 
     connect(ui->graphicsView, &QClickableGraphicsView::mousePressed, this, &MainWindow::on_graphicsView_clicked);
 
@@ -46,18 +46,18 @@ void MainWindow::on_actionExit_triggered()
 
 void MainWindow::update_camera_view()
 {
-    cv::Mat frame, i;
-//    videoCapture >> frame;
-    frame = cv::imread("../taxman/assets/krzyzyki.png", CV_LOAD_IMAGE_COLOR);
-    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
+//    cv::Mat frame, i;
+////    videoCapture >> frame;
+//    frame = cv::imread("../taxman/assets/krzyzyki.png", CV_LOAD_IMAGE_COLOR);
+//    cv::cvtColor(frame, frame, cv::COLOR_BGR2GRAY);
 
-    NiblackSauvolaWolfJolion(frame, frame, WOLFJOLION, 40, 40, 0.5, 128);
+//    NiblackSauvolaWolfJolion(frame, frame, WOLFJOLION, 40, 40, 0.5, 128);
 
-    i = frame;
-    auto qimage = QImage{i.data, i.cols, i.rows, QImage::Format_Indexed8};
-    ui->graphicsView->scene()->clear();
-    ui->graphicsView->scene()->addItem(new QGraphicsPixmapItem{QPixmap::fromImage(qimage)});
-    ui->graphicsView->update();
+//    i = frame;
+//    auto qimage = QImage{i.data, i.cols, i.rows, QImage::Format_Indexed8};
+//    ui->graphicsView->scene()->clear();
+//    ui->graphicsView->scene()->addItem(new QGraphicsPixmapItem{QPixmap::fromImage(qimage)});
+//    ui->graphicsView->update();
 }
 
 void MainWindow::on_questionsInSurvey_sliderReleased()
@@ -84,14 +84,22 @@ void MainWindow::on_answersInSurvey_sliderReleased()
 
 void MainWindow::on_captureReferenceFrameButton_released()
 {
-    videoCapture >> referenceFrame;
-    qDebug() << "captured reference frame";
+//    videoCapture >> referenceFrame;
+    QFileDialog fileDialog {this};
+    fileDialog.setFileMode(QFileDialog::ExistingFile);
+
+    if (fileDialog.exec()) {
+        auto selected = fileDialog.selectedFiles().first();
+        referenceFrame = cv::imread(selected.toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+        NiblackSauvolaWolfJolion(referenceFrame, referenceFrame, WOLFJOLION, 40, 40, 0.5, 128);
+        qDebug() << "captured reference frame";
+    }
 }
 
 void MainWindow::on_startSurveyDecodingButton_released()
 {
     if (this->answerDecodingState == AnswerDecodingState::IDLE) {
-        this->timer.stop();
+//        this->timer.stop();
         this->answerDecodingState = AnswerDecodingState::WAITING_FOR_1ST_CLICK;
         QApplication::setOverrideCursor(Qt::CrossCursor);
         qDebug() << "decoding started; waiting for 1st click";
@@ -146,24 +154,8 @@ void MainWindow::calculateAnswers() {
         centralPoints.push_back(currentColumn);
     }
 
-    cv::Mat cross, bg;
-//    videoCapture >> cross;
-    cross = cv::imread("../taxman/assets/krzyzyki.png", CV_LOAD_IMAGE_COLOR);
-    referenceFrame = cv::imread("../taxman/assets/krzyzyki_tlo.png", CV_LOAD_IMAGE_COLOR);
-    qDebug() << cross.cols << " " << referenceFrame.rows;
-    qDebug() << "read files";
-
-    cv::cvtColor(cross, cross, cv::COLOR_BGR2GRAY);
-    cv::cvtColor(referenceFrame, bg, cv::COLOR_BGR2GRAY);
-    qDebug() << "converted to gray";
-
-    NiblackSauvolaWolfJolion(cross, cross, WOLFJOLION, 40, 40, 0.5, 128);
-    NiblackSauvolaWolfJolion(bg, bg, WOLFJOLION, 40, 40, 0.5, 128);
-    qDebug() << "binarized images";
-
-    cv::Mat absImg, res(bg);
-    cv::absdiff(cross, bg, absImg);
-//    NiblackSauvolaWolfJolion(absImg, res, WOLFJOLION, 40, 40, 0.5, 128);
+    cv::Mat absImg;
+    cv::absdiff(frame, referenceFrame, absImg);
     qDebug() << "binarized absdiff";
 
     qDebug() << "non-zero points in abs" << cv::countNonZero(absImg);
@@ -223,9 +215,8 @@ void MainWindow::on_actionZapisz_triggered()
     QFileDialog fileDialog {this};
     fileDialog.setFileMode(QFileDialog::AnyFile);
 
-    QStringList selected;
     if (fileDialog.exec()) {
-        selected = fileDialog.selectedFiles();
+        auto selected = fileDialog.selectedFiles();
 
         QFile file {selected.first()};
         file.open(QIODevice::WriteOnly | QIODevice::Text);
@@ -238,5 +229,23 @@ void MainWindow::on_actionZapisz_triggered()
         }
 
         file.close();
+    }
+}
+
+void MainWindow::on_openAnsweredSurveyButton_released()
+{
+    QFileDialog fileDialog {this};
+    fileDialog.setFileMode(QFileDialog::ExistingFile);
+
+    if (fileDialog.exec()) {
+        auto selected = fileDialog.selectedFiles().first();
+        frame = cv::imread(selected.toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
+
+        NiblackSauvolaWolfJolion(frame, frame, WOLFJOLION, 40, 40, 0.5, 128);
+
+        auto qimage = QImage{frame.data, frame.cols, frame.rows, QImage::Format_Indexed8};
+        ui->graphicsView->scene()->clear();
+        ui->graphicsView->scene()->addItem(new QGraphicsPixmapItem{QPixmap::fromImage(qimage)});
+        ui->graphicsView->update();
     }
 }

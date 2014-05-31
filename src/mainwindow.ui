@@ -50,7 +50,14 @@
          <item>
           <widget class="QPushButton" name="captureReferenceFrameButton">
            <property name="text">
-            <string>Przechwyć wzorcowy obraz</string>
+            <string>Wczytaj pustą ankietę</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="openAnsweredSurveyButton">
+           <property name="text">
+            <string>Wczytaj wypełnioną ankietę</string>
            </property>
           </widget>
          </item>

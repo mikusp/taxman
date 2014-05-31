@@ -54,6 +54,8 @@ private slots:
 
     void on_actionZapisz_triggered();
 
+    void on_openAnsweredSurveyButton_released();
+
 private:
     void calculateAnswers();
 
@@ -63,7 +65,7 @@ private:
     QGraphicsPixmapItem pixmap;
     cv::VideoCapture videoCapture;
 
-    cv::Mat referenceFrame;
+    cv::Mat referenceFrame, frame;
 
     int numberOfQuestions;
     int numberOfAnswers;
