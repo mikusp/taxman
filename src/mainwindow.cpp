@@ -13,7 +13,7 @@
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow{parent},
     ui{new Ui::MainWindow},
-    videoCapture{1},
+    videoCapture{0},
     answerDecodingState{AnswerDecodingState::IDLE}
 {
     ui->setupUi(this);
