@@ -55,6 +55,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QPushButton" name="correctAnswersButton">
+           <property name="text">
+            <string>Wczytaj poprawne odpowiedzi</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QPushButton" name="openAnsweredSurveyButton">
            <property name="text">
             <string>Wczytaj wypełnioną ankietę</string>

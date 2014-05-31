@@ -58,6 +58,8 @@ private slots:
 
     void on_useCameraCheckbox_stateChanged(int state);
 
+    void on_correctAnswersButton_released();
+
 private:
     void calculateAnswers();
 
@@ -76,6 +78,7 @@ private:
 
     AnswerDecodingState answerDecodingState;
     std::vector<std::tuple<int, int>> results;
+    std::vector<std::tuple<int, int>> answers;
 
     Point leftUpper;
     Point rightLower;

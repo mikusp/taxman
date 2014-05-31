@@ -208,12 +208,50 @@ void MainWindow::calculateAnswers() {
 
     std::string text;
     for (auto it : results) {
-        text.append("Question ");
+        text.append("Odpowiedź na pytanie ");
         text.append(std::to_string(std::get<0>(it)));
-        text.append(" has answer ");
+        text.append(": ");
         text.append(std::to_string(std::get<1>(it)));
         text.append("\n");
     }
+
+    std::map<int, int> answersMap;
+    for (auto it : answers) {
+        answersMap.insert(std::pair<int,int>(std::get<0>(it), std::get<1>(it)));
+    }
+
+    std::map<int, int> resultsMap;
+    for (auto it : results) {
+        resultsMap.insert(std::pair<int,int>(std::get<0>(it), std::get<1>(it)));
+    }
+
+    auto score = 0;
+    for (auto q = 1; q <= this->numberOfQuestions; ++q) {
+        auto correct = false;
+        try {
+            correct = answersMap.at(q) == resultsMap.at(q);
+        }
+        catch (const std::out_of_range&) {
+            // not sure if safe...
+        }
+
+        text.append("Pytanie ");
+        text.append(std::to_string(q));
+
+        if (correct) {
+            text.append(" POPRAWNE\n");
+            ++score;
+        }
+        else {
+            text.append(" NIEPOPRAWNE\n");
+        }
+    }
+
+    text.append("Wynik: ");
+    text.append(std::to_string(score));
+    text.append("/");
+    text.append(std::to_string(numberOfQuestions));
+    text.append("\n");
 
     ui->decodedAnswersTextArea->setPlainText(QString::fromStdString(text));
     answerDecodingState = AnswerDecodingState::IDLE;
@@ -227,6 +265,7 @@ void MainWindow::on_actionZapisz_triggered()
 {
     QFileDialog fileDialog {this};
     fileDialog.setFileMode(QFileDialog::AnyFile);
+    fileDialog.setAcceptMode(QFileDialog::AcceptSave);
 
     if (fileDialog.exec()) {
         auto selected = fileDialog.selectedFiles();
@@ -276,5 +315,34 @@ void MainWindow::on_useCameraCheckbox_stateChanged(int state)
         this->camera = false;
         timer.stop();
         this->ui->openAnsweredSurveyButton->setEnabled(true);
+    }
+}
+
+void MainWindow::on_correctAnswersButton_released()
+{
+    QFileDialog fileDialog {this};
+    fileDialog.setFileMode(QFileDialog::ExistingFile);
+    fileDialog.setNameFilter(QString{"CSV (*.csv)"});
+
+    if (fileDialog.exec()) {
+        auto selected = fileDialog.selectedFiles().first();
+
+        QFile file {selected};
+        file.open(QIODevice::ReadOnly | QIODevice::Text);
+        QTextStream str {&file};
+
+        QString line;
+        answers.clear();
+
+        while ((line = str.readLine()) != "") {
+            auto qa = line.split(",");
+            bool qOk, aOk;
+            auto q = qa.value(0, "-1").toInt(&qOk);
+            auto a = qa.value(1, "-1").toInt(&aOk);
+            if (qOk && aOk && q != -1 && a != -1)
+                answers.emplace_back(std::make_tuple(q, a));
+        }
+
+        qDebug() << "read correct answers";
     }
 }
