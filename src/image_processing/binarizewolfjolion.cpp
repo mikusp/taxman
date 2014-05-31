@@ -18,7 +18,7 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <iostream>
-#include <highgui.h>
+//#include <highgui.h>
 
 using namespace std;
 using namespace cv;
