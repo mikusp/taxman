@@ -8,6 +8,8 @@
 #include <opencv2/opencv.hpp>
 
 #include <memory>
+#include <vector>
+#include <tuple>
 
 namespace Ui {
 class MainWindow;
@@ -50,6 +52,8 @@ private slots:
 
     void on_graphicsView_clicked(int x, int y);
 
+    void on_actionZapisz_triggered();
+
 private:
     void calculateAnswers();
 
@@ -65,6 +69,7 @@ private:
     int numberOfAnswers;
 
     AnswerDecodingState answerDecodingState;
+    std::vector<std::tuple<int, int>> results;
 
     Point leftUpper;
     Point rightLower;

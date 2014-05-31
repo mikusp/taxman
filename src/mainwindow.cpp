@@ -2,6 +2,7 @@
 #include "ui_mainwindow.h"
 
 #include <QDebug>
+#include <QFileDialog>
 #include <opencv2/opencv.hpp>
 
 #include "qclickablegraphicsview.h"
@@ -174,11 +175,10 @@ void MainWindow::calculateAnswers() {
     auto sliceWidth  = (unsigned int)(columnWidth * 0.75);
 
     auto answerTolerance = 30;
-    std::vector<std::tuple<int, int>> results;
+    results.clear();
 
     for (auto i = 0; i < numberOfQuestions; ++i) {
-    for (auto j = 0; j < numberOfAnswers; ++j) {
-//        for (auto i = 0; i < numberOfQuestions; ++i) {
+        for (auto j = 0; j < numberOfAnswers; ++j) {
             auto currentCell = centralPoints.at(j).at(i);
 
             auto yLow = (unsigned int)(std::get<1>(currentCell) - (double)(sliceHeight / 2.0) + 1);
@@ -205,15 +205,38 @@ void MainWindow::calculateAnswers() {
     }
 
     std::string text;
-    for (auto it = begin(results); it != end(results); ++it) {
+    for (auto it : results) {
         text.append("Question ");
-        text.append(std::to_string(std::get<0>(*it)));
+        text.append(std::to_string(std::get<0>(it)));
         text.append(" has answer ");
-        text.append(std::to_string(std::get<1>(*it)));
+        text.append(std::to_string(std::get<1>(it)));
         text.append("\n");
     }
 
     ui->decodedAnswersTextArea->setPlainText(QString::fromStdString(text));
     answerDecodingState = AnswerDecodingState::IDLE;
 //    this->timer.start();
+}
+
+void MainWindow::on_actionZapisz_triggered()
+{
+    QFileDialog fileDialog {this};
+    fileDialog.setFileMode(QFileDialog::AnyFile);
+
+    QStringList selected;
+    if (fileDialog.exec()) {
+        selected = fileDialog.selectedFiles();
+
+        QFile file {selected.first()};
+        file.open(QIODevice::WriteOnly | QIODevice::Text);
+        QTextStream str {&file};
+
+        str << "question,answer" << endl;
+
+        for (auto it : results) {
+            str << QString::number(std::get<0>(it)) << "," << QString::number(std::get<1>(it)) << endl;
+        }
+
+        file.close();
+    }
 }
