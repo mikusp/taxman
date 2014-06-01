@@ -11,7 +11,7 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = taxman
 TEMPLATE = app
 
-QMAKE_CXXFLAGS += -std=c++11 -Werror -Wno-unused-variable -fstack-protector -Wformat-security -fvisibility=hidden -Wpointer-arith -Winit-self
+QMAKE_CXXFLAGS += -std=c++11 -Werror -Wno-unused-variable -Wformat-security -fvisibility=hidden -Wpointer-arith -Winit-self
 
 QMAKE_CXXFLAGS_DEBUG += -g3 -ggdb3
 
